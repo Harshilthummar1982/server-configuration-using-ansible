@@ -1,0 +1,51 @@
+---
+- name: arksoftai
+  hosts: ec2-instances
+  gather_facts: true
+  become: true
+  become: true
+
+  tasks:
+    - name: Create users
+      become: true
+      user:
+        name: "{{ item }}"
+        state: present
+        shell: /bin/bash
+      with_items:
+        - autopulse
+        - arksoft
+        - apiautopulse
+
+    - name: Grant sudo privileges to users
+      become: true
+      lineinfile:
+        dest: /etc/sudoers
+        line: "{{ item }} ALL=(ALL:ALL) NOPASSWD:ALL"
+        validate: visudo -cf %s
+      with_items:
+        - autopulse
+        - arksoft
+        - apiautopulse
+
+    - name: Update apt cache
+      become: true
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      become: true
+      apt:
+        name: nginx
+        state: present
+
+    - name: Install Node.js version 18
+      become: true
+      apt_repository:
+        repo: deb https://deb.nodesource.com/node_18.x {{ ansible_distribution_release }} main
+        state: present
+        filename: nodesource
+        update_cache: yes
+      apt:
+        name: nodejs
+        state: present
